@@ -84,7 +84,6 @@ try:
                 initial_view_state={
                     "latitude": 37.76,
                     "longitude": -122.4,
-                    "zoom": 11,
                     "pitch": 50,
                 },
                 layers=selected_layers,
