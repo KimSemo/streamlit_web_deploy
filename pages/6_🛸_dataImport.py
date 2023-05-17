@@ -5,8 +5,10 @@ import glob #파일 다 읽어줌
 import os, sys
 import matplotlib.pyplot as plt
 
-#os.chdir("C:\\Users\\San\\Desktop\\23-1\\cap\\practice\\샘플 데이터\\NASA Bearing Dataset\\2nd_test")
-os.chdir("C:/Users/San/Desktop/23-1/cap/practice/샘플 데이터/NASA Bearing Dataset/2nd_test/2nd_test")
+
+
+
+os.chdir("C:\\Users\\San\\Desktop\\23-1\\cap\\practice\\샘플 데이터\\NASA Bearing Dataset\\2nd_test")
 # os.chdir=change directory로 작업중인 디렉토리를 변경하는 함수
 file_list = glob.glob("**/*.39", recursive=True)
 #"**/*.39": 이 패턴은 현재 디렉토리 및 모든 하위 디렉토리에서 확장자가 .39인 파일을 찾습니다.
@@ -22,6 +24,13 @@ df = pd.read_csv(file_list[0], sep='\t',header=None) #file_list[0]에 있는걸 
 #df.head() # head로 앞에서부터 5개의 값을 뽑음
 df
 #이렇게 뽑으면 너무 많은(20479*948)데이터가 생기므로 신호처리를 해줘야 한다
+
+#스트림릿에서는 클라우드 서비스에 데이터를 업로드하고, 해당 데이터에 액세스하는 것이 일반적입니다. 
+# 스트림릿에서 제공하는 upload_file() 메서드를 사용하여 파일을 업로드할 수 있습니다.
+uploaded_file = st.file_uploader("C:\\Users\\San\\Desktop\\23-1\\cap\\practice\\샘플 데이터\\NASA Bearing Dataset\\2nd_test", type="csv")
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file)
+
 
 #x와y열을 나눠줘야 밑에 시각화 그래프를 그릴 수 있다.
 
