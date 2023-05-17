@@ -8,9 +8,17 @@ import matplotlib.pyplot as plt
 
 #스트림릿에서는 클라우드 서비스에 데이터를 업로드하고, 해당 데이터에 액세스하는 것이 일반적입니다. 
 # 스트림릿에서 제공하는 upload_file() 메서드를 사용하여 파일을 업로드할 수 있습니다.
-uploaded_file = st.file_uploader("C:\\Users\\San\\Desktop\\23-1\\cap\\practice\\샘플 데이터\\NASA Bearing Dataset\\2nd_test", type="csv")
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
+
+#uploaded_file = st.file_uploader("C:\\Users\\San\\Desktop\\23-1\\cap\\practice\\샘플 데이터\\NASA Bearing Dataset\\2nd_test", type="csv")
+#if uploaded_file is not None:
+#    df = pd.read_csv(uploaded_file)
+
+# CSV 파일을 업로드합니다.
+file = st.file_uploader("Upload CSV", type="csv")
+
+# 업로드한 파일이 있을 경우, 데이터를 불러와 데이터프레임으로 변환합니다.
+if file is not None:
+    df = pd.read_csv(file)
 
 os.chdir("C:\\Users\\San\\Desktop\\23-1\\cap\\practice\\샘플 데이터\\NASA Bearing Dataset\\2nd_test")
 # os.chdir=change directory로 작업중인 디렉토리를 변경하는 함수
