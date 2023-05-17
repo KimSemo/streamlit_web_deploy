@@ -5,7 +5,8 @@ import glob #파일 다 읽어줌
 import os, sys
 import matplotlib.pyplot as plt
 
-os.chdir("C:\\Users\\San\\Desktop\\23-1\\cap\\practice\\샘플 데이터\\NASA Bearing Dataset\\2nd_test")
+#os.chdir("C:\\Users\\San\\Desktop\\23-1\\cap\\practice\\샘플 데이터\\NASA Bearing Dataset\\2nd_test")
+os.chdir("C:/Users/San/Desktop/23-1/cap/practice/샘플 데이터/NASA Bearing Dataset/2nd_test/2nd_test")
 # os.chdir=change directory로 작업중인 디렉토리를 변경하는 함수
 file_list = glob.glob("**/*.39", recursive=True)
 #"**/*.39": 이 패턴은 현재 디렉토리 및 모든 하위 디렉토리에서 확장자가 .39인 파일을 찾습니다.
