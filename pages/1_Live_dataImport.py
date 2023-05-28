@@ -367,6 +367,79 @@ while current_time <= end_time:
     # 1초마다 데이터 갱신
     time.sleep(1)
 
+# import streamlit as st
+# import numpy as np
+# import pandas as pd
+# import requests
+# import matplotlib.pyplot as plt
+# import time
+
+# # 데이터 가져오기
+# def get_realtime_data(file_name):
+#     base_url = "https://raw.githubusercontent.com/changyeon99/TimingBeltData/main/"
+#     url = base_url + file_name
+#     response = requests.get(url)
+#     if response.status_code == 200:
+#         data = response.text
+#         return data
+#     else:
+#         return None
+
+# # 스트림릿 앱 시작
+# st.header("Real-time Data Visualization")
+
+# # 버튼 클릭 상태
+# button_clicked = False
+
+# # 버튼 추가
+# if st.button("Generate Graph and Data"):
+#     button_clicked = True
+
+# # 데이터 처리 및 시각화
+# start_time = time.strptime("2023-05-28 00:03", "%Y-%m-%d %H:%M")
+# end_time = time.strptime("2023-05-28 10:46", "%Y-%m-%d %H:%M")
+# current_time = start_time
+
+# while current_time <= end_time:
+#     file_name = time.strftime("A%Y-%m-%d %H:%M.txt", current_time)
+#     data = get_realtime_data(file_name)
+#     if data:
+#         # 데이터 전처리
+#         lines = data.strip().split("\n")
+#         values_1 = []
+#         values_2 = []
+#         values_3 = []
+#         for line in lines:
+#             if line:
+#                 parts = line.split(",")
+#                 if len(parts) >= 3:
+#                     try:
+#                         value_1 = float(parts[0])
+#                         value_2 = float(parts[1])
+#                         value_3 = float(parts[2])
+#                         values_1.append(value_1)
+#                         values_2.append(value_2)
+#                         values_3.append(value_3)
+#                     except ValueError:
+#                         continue
+
+#         # 데이터프레임 생성
+#         df = pd.DataFrame({"Value 1": values_1, "Value 2": values_2, "Value 3": values_3})
+
+#         if button_clicked:
+#             # 그래프 설명
+#             st.write(f"Real-time Data - {time.strftime('%Y-%m-%d %H:%M', current_time)}")
+#             st.line_chart(df)
+
+#             # 데이터 출력
+#             st.write("Data:")
+#             st.dataframe(df)
+
+#     # 다음 시간으로 업데이트
+#     current_time = time.localtime(time.mktime(current_time) + 60)  # 60 seconds = 1 minute
+
+#     # 1초마다 데이터 갱신
+#     time.sleep(1)
 
 
 
