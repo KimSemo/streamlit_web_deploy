@@ -89,15 +89,25 @@ st.write("FFT를 사용하여 신호를 처리하고 시각화합니다.")
 
 # Matplotlib figure 생성
 with st.spinner('로딩 중...'):
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(12, 8), tight_layout=True)
+
+    # 전체 그래프 데이터
+    all_signals = []
 
     # 개별 그래프 플롯
     for i in range(4):
         signal = fft_df[f'ch{i+1}'].values
 
+        # 선 그래프 플롯
         ax.plot(signal, label=f'Ch{i+1} FFT')
 
-    # 4개의 그래프를 한 번에 보여주기 위해 범례와 제목 추가
+        # 전체 그래프 데이터에 추가
+        all_signals.extend(signal)
+
+    # 전체 그래프 플롯
+    ax.plot(all_signals, label='Combined FFT', color='black', linewidth=2)
+
+    # 범례와 제목 추가
     ax.legend()
     ax.set_title('Combined FFT')
     ax.set_xlabel('Frequency')
@@ -105,10 +115,6 @@ with st.spinner('로딩 중...'):
 
     # 그래프 표시
     st.pyplot(fig)
-
-
-
-
 
 
 
