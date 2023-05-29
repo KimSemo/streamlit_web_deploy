@@ -1,49 +1,60 @@
-import requests
-import pandas as pd
+import streamlit as st
 import numpy as np
+import pandas as pd
+import requests
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
+import time
+from sklearn.preprocessing import StandardScaler
 
-# 데이터 스트림 받아오기
-def get_realtime_data():
-    url = "https://raw.githubusercontent.com/username/repo/main/realtime_data.csv"  # GitHub에서 데이터 파일의 URL을 입력합니다.
+# 데이터 가져오기
+def get_realtime_data(file_name):
+    base_url = "https://raw.githubusercontent.com/changyeon99/TimingBeltData/main/"
+    url = base_url + file_name
     try:
         response = requests.get(url)
-        if response.status_code == 200:
-            return response.text
-        else:
-            return None
-    except:
+        response.raise_for_status()  # 오류가 발생하면 예외 발생
+        data = response.text
+        return data
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error retrieving data: {str(e)}")
         return None
 
-# rms 신호추출기법 root mean square 신호의 크기를 추출
-def rms(stats):
-    return np.sqrt(np.mean(stats**2, axis=0))
+# 신호 처리 함수 - 이동 평균
+def process_moving_average_data(df):
+    processed_df = pd.DataFrame(index=df.index)  # 인덱스 설정
+    window_size = 5  # 이동 평균에 사용할 윈도우 크기 설정
+    zscore_threshold = 3  # Z-score 이상치 탐지 임계값 설정
 
-# 데이터 처리 및 신호처리 함수
-def process_data(df):
-    # 신호 처리
-    rms_value = rms(df.values)
+    for column in df.columns:
+        processed_column = df[column].dropna()  # NaN 값 제거
+        processed_column = processed_column.rolling(window_size, min_periods=1).mean()  # 이동 평균 적용
+        scaler = StandardScaler()
+        processed_column = scaler.fit_transform(processed_column.values.reshape(-1, 1))[:, 0]  # 스케일링
 
-    # RMS 데이터 출력
-    print("RMS Data:")
-    print(rms_value)
+        # 이상치 탐지 및 처리
+        z_scores = np.abs((processed_column - processed_column.mean()) / processed_column.std())
+        processed_column[z_scores > zscore_threshold] = np.nan
 
-    # RMS 데이터 시각화
-    fig, ax = plt.subplots(figsize=(12, 4))
-    ax.bar(range(len(rms_value)), rms_value)
-    ax.set_xticks(range(len(rms_value)))
-    ax.set_xticklabels(["Ch1", "Ch2", "Ch3"])
-    ax.set_ylabel("RMS Value")
-    ax.set_title("RMS Data")
-    plt.show()
+        processed_df[column] = processed_column
 
-    # 이상감지 수행
+    return processed_df
+
+# 데이터 전처리 함수
+def preprocess_data(df):
+    scaler = StandardScaler()
+    scaled_data = scaler.fit_transform(df)
+    processed_df = pd.DataFrame(scaled_data, columns=df.columns, index=df.index)
+    return processed_df
+
+# 이상 감지 함수
+def anomaly_detection(df, trScore_arr, tsScore_arr):
     cl = 0.2  # 임계값 설정
-    integrated_tsScore = np.sqrt(np.sum((tsScore_arr - trScore_arr)**2, axis=1))
+
+    # 이상 감지 수행
+    integrated_tsScore = np.sqrt(np.sum((tsScore_arr - trScore_arr) ** 2, axis=1))
     outidx = np.where(integrated_tsScore > cl)[0]
 
-    # 이상감지 시각화
+    # 이상 감지 시각화
     fig, ax = plt.subplots(figsize=(12, 4))
     ax.plot(integrated_tsScore, color='blue')
     ax.axhline(y=cl, color='red')
@@ -54,132 +65,85 @@ def process_data(df):
     ax.set_title("Anomaly Detection")
     plt.show()
 
-# RMS 데이터 파일 경로
-rms_file_path = 'C:\\Users\\San\\Desktop\\23-1\\cap\\practice\\샘플 데이터\\NASA Bearing Dataset\\RMS_bearing.csv'
+# 신호 처리 기법 선택
+processing_technique = "Moving Average"
 
-# Train Data, Test Data
-rms_df = pd.read_csv(rms_file_path)
-trdat = rms_df.values[0:400, :]
-tsdat = rms_df.values
+# 스트림릿 앱 시작
+st.header("Real-time Data Visualization")
 
-trScore_arr = np.zeros([trdat.shape[0], trdat.shape[1]])
-tsScore_arr = np.zeros([tsdat.shape[0], trdat.shape[1]])
+# 버튼 클릭 여부 확인
+button_clicked = st.sidebar.button("Show Graph")
 
-lr = LinearRegression()
+# 데이터 처리 및 시각화
+start_time = time.strptime("2023-05-28 00:03", "%Y-%m-%d %H:%M")
+end_time = time.strptime("2023-05-28 10:46", "%Y-%m-%d %H:%M")
+current_time = start_time
 
-input_idx = np.arange(trdat.shape[1]).tolist()
+fig, ax = plt.subplots(figsize=(12, 4))
+df_combined = pd.DataFrame()  # 이전 데이터와 새로운 데이터를 합칠 데이터프레임
 
-for idx in input_idx:
-    input_idx = np.arange(trdat.shape[1]).tolist()
-    input_idx.remove(idx)
-
-    lr.fit(trdat[:, input_idx], trdat[:, idx])
-    trScore = lr.predict(trdat[:, input_idx])
-    tsScore = lr.predict(tsdat[:, input_idx])
-
-    trScore_arr[:, idx] = trScore
-    tsScore_arr[:, idx] = tsScore
-
-# 실시간 데이터 수신 및 처리
-while True:
-    # GitHub에서 실시간 데이터 가져오기
-    data = get_realtime_data()
-    if data:
+while current_time <= end_time:
+    file_name = time.strftime("A%Y-%m-%d %H:%M.txt", current_time)
+    data = get_realtime_data(file_name)
+    if data and button_clicked:
         # 데이터 전처리
-        df_realtime = pd.read_csv(data)
+        lines = data.strip().split("\n")
+        values_1 = []
+        values_2 = []
+        values_3 = []
+        for line in lines:
+            if line:
+                parts = line.split(",")
+                if len(parts) >= 3:
+                    try:
+                        value_1 = float(parts[0])
+                        value_2 = float(parts[1])
+                        value_3 = float(parts[2])
+                        values_1.append(value_1)
+                        values_2.append(value_2)
+                        values_3.append(value_3)
+                    except ValueError:
+                        continue
 
-        # 데이터 처리 및 신호 처리
-        process_data(df_realtime)
+        # 데이터프레임 생성
+        df = pd.DataFrame({"Value 1": values_1, "Value 2": values_2, "Value 3": values_3})
 
-    else:
-        print("Failed to retrieve real-time data from GitHub.")
+        # 선택한 신호 처리 기법 적용
+        if processing_technique == "Moving Average":
+            processed_df = process_moving_average_data(df)
 
+            # 이상 감지 수행
+            anomaly_detection(processed_df, processed_df.values[:-1], processed_df.values[1:])
 
-# 위 코드 실행 안될 시 사용 데이터 수집, 신호처리, 이상감지 묶은 코드 URL이랑 데이터 저장 위치,이름 바꿔주기
-# import requests
-# import pandas as pd
-# import numpy as np
-# import matplotlib.pyplot as plt
-# from sklearn.linear_model import LinearRegression
-# import streamlit as st
+        # 데이터 스케일링
+        if processing_technique != "Raw":
+            processed_df = preprocess_data(processed_df)
 
-# # 데이터 스트림 받아오기
-# def get_realtime_data():
-#     url = "https://raw.githubusercontent.com/username/repo/main/realtime_data.csv"  # GitHub에서 데이터 파일의 URL을 입력합니다.
-#     try:
-#         response = requests.get(url)
-#         if response.status_code == 200:
-#             return response.text
-#         else:
-#             return None
-#     except:
-#         return None
+        # 기존 데이터프레임과 새로운 데이터프레임 합치기
+        df_combined = pd.concat([df_combined, processed_df], ignore_index=True)
 
-# # rms 신호추출기법 root mean square 신호의 크기를 추출
-# def rms(stats):
-#     return np.sqrt(np.mean(stats**2, axis=0))
+        # 그래프 그리기
+        ax.clear()
+        if not df_combined.empty:
+            for column in df_combined.columns:
+                ax.plot(df_combined.index, df_combined[column], label=column)
+        else:
+            for column in df.columns:
+                ax.plot(df.index, df[column], label=column)
+        ax.set_xlim(0, len(df_combined))
+        ax.set_ylim(df_combined.min().min(), df_combined.max().max())
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Value")
+        ax.set_title(f"Real-time Data - {time.strftime('%Y-%m-%d %H:%M', current_time)}")
+        ax.legend()
+        st.pyplot(fig)
 
-# # 데이터 처리 및 신호처리 함수
-# def process_data(df):
-#     # 신호 처리
-#     rms_value = rms(df.values)
+    # 다음 시간으로 업데이트
+    current_time = time.localtime(time.mktime(current_time) + 60)  # 60 seconds = 1 minute
 
-#     # RMS 데이터 출력
-#     st.write("RMS Data:")
-#     st.write(rms_value)
+    # 1초마다 데이터 갱신
+    time.sleep(1)
 
-#     # RMS 데이터 시각화
-#     fig, ax = plt.subplots(figsize=(12, 4))
-#     ax.bar(range(len(rms_value)), rms_value)
-#     ax.set_xticks(range(len(rms_value)))
-#     ax.set_xticklabels(["Ch1", "Ch2", "Ch3"])
-#     ax.set_ylabel("RMS Value")
-#     ax.set_title("RMS Data")
-#     st.pyplot(fig)
+# 그래프 창 닫기
+plt.close(fig)
 
-#     # 이상감지 수행
-#     cl = 0.2  # 임계값 설정
-#     integrated_tsScore = np.sqrt(np.sum((tsScore_arr - trScore_arr)**2, axis=1))
-#     outidx = np.where(integrated_tsScore > cl)[0]
-
-#     # 이상감지 시각화
-#     fig, ax = plt.subplots(figsize=(12, 4))
-#     ax.plot(integrated_tsScore, color='blue')
-#     ax.axhline(y=cl, color='red')
-
-#     for idx in outidx:
-#         ax.axvline(x=idx, color='red', linestyle='-', alpha=0.1)
-
-#     ax.set_title("Anomaly Detection")
-#     st.pyplot(fig)
-
-# # RMS 데이터 파일 경로
-# rms_file_path = 'C:\\Users\\San\\Desktop\\23-1\\cap\\practice\\샘플 데이터\\NASA Bearing Dataset\\RMS_bearing.csv'
-
-# # Train Data, Test Data
-# rms_df = pd.read_csv(rms_file_path)
-# trdat = rms_df.values[0:400, :]
-# tsdat = rms_df.values
-
-# trScore_arr = np.zeros([trdat.shape[0], trdat.shape[1]])
-# tsScore_arr = np.zeros([tsdat.shape[0], trdat.shape[1]])
-
-# lr = LinearRegression()
-
-# input_idx = np.arange(trdat.shape[1]).tolist()
-
-# # 스트림릿 애플리케이션 시작
-# st.title("Real-time Anomaly Detection")
-
-# while True:
-#     # GitHub에서 실시간 데이터 가져오기
-#     data = get_realtime_data()
-#     if data:
-#         # 데이터 전처리
-#         df_realtime = pd.read_csv(data)
-
-#         # 데이터 처리 및 신호 처리
-#         process_data(df_realtime)
-
-#     else:
-#         st.write("Failed to retrieve real-time data from GitHub.")
