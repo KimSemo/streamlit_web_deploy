@@ -918,6 +918,36 @@ def process_fft_data(df):
 
     return processed_df
 
+# # 신호 처리 함수 - FFT with FFT shift and Windowing
+# def process_fft_data(df):
+#     processed_df = pd.DataFrame(index=df.index[1:-1])  # Adjusted index to match the length of processed FFT values
+#     window_size = 5  # 이동 평균에 사용할 윈도우 크기 설정
+#     zscore_threshold = 3  # Z-score 이상치 탐지 임계값 설정
+
+#     for column in df.columns:
+#         # Apply data trimming
+#         trimmed_data = df[column][1:-1]  # Exclude first and last data points
+
+#         # Apply Hann window
+#         window = np.hanning(len(trimmed_data))
+#         windowed_data = trimmed_data * window
+
+#         fft_values = np.fft.fft(windowed_data)  # FFT 적용
+
+#         # FFT shift 적용
+#         fft_values_shifted = np.fft.fftshift(fft_values)
+
+#         # FFT 결과 정규화
+#         fft_values_normalized = np.abs(fft_values_shifted) / len(fft_values_shifted)
+
+#         # Add processed values to the DataFrame
+#         processed_df[column] = fft_values_normalized
+
+#     return processed_df
+
+
+
+
 # 신호 처리 함수 - 이동 평균
 def process_moving_average_data(df):
     processed_df = pd.DataFrame(index=df.index)  # 인덱스 설정
@@ -959,8 +989,10 @@ start_time = time.strptime("2023-05-28 00:03", "%Y-%m-%d %H:%M")
 end_time = time.strptime("2023-05-28 10:46", "%Y-%m-%d %H:%M")
 current_time = start_time
 
-fig, ax = plt.subplots(figsize=(12, 4))
+#fig, ax = plt.subplots(figsize=(12, 4))
 df_combined = pd.DataFrame()  # 이전 데이터와 새로운 데이터를 합칠 데이터프레임
+
+chart = st.line_chart()  # Create an empty line chart
 
 while current_time <= end_time:
     file_name = time.strftime("A%Y-%m-%d %H:%M.txt", current_time)
@@ -1006,20 +1038,23 @@ while current_time <= end_time:
         df_combined = pd.concat([df_combined, processed_df], ignore_index=True)
 
         # 그래프 그리기
-        ax.clear()
-        if not df_combined.empty:
-            for column in df_combined.columns:
-                ax.plot(df_combined.index, df_combined[column], label=column)
-        else:
-            for column in df.columns:
-                ax.plot(df.index, df[column], label=column)
-        ax.set_xlim(0, len(df_combined))
-        ax.set_ylim(df_combined.min().min(), df_combined.max().max())
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Value")
-        ax.set_title(f"Real-time Data - {time.strftime('%Y-%m-%d %H:%M', current_time)}")
-        ax.legend()
-        st.pyplot(fig)
+        # ax.clear()
+        # if not df_combined.empty:
+        #     for column in df_combined.columns:
+        #         ax.plot(df_combined.index, df_combined[column], label=column)
+        # else:
+        #     for column in df.columns:
+        #         ax.plot(df.index, df[column], label=column)
+        # ax.set_xlim(0, len(df_combined))
+        # ax.set_ylim(df_combined.min().min(), df_combined.max().max())
+        # ax.set_xlabel("Time")
+        # ax.set_ylabel("Value")
+        # ax.set_title(f"Real-time Data - {time.strftime('%Y-%m-%d %H:%M', current_time)}")
+        # ax.legend()
+        # st.pyplot(fig)
+
+        # Update the line chart with new rows
+        chart.add_rows(processed_df)
 
     # 다음 시간으로 업데이트
     current_time = time.localtime(time.mktime(current_time) + 60)  # 60 seconds = 1 minute
@@ -1028,7 +1063,7 @@ while current_time <= end_time:
     time.sleep(1)
 
 # 그래프 창 닫기
-plt.close(fig)
+#plt.close(fig)
 
 
 

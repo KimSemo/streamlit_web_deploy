@@ -455,6 +455,117 @@
 
 
 
+# import streamlit as st
+# import numpy as np
+# import pandas as pd
+# import requests
+# import matplotlib.pyplot as plt
+# from sklearn.preprocessing import MinMaxScaler, StandardScaler
+# import time
+
+# # 데이터 가져오기
+# def get_realtime_data(file_name):
+#     base_url = "https://raw.githubusercontent.com/changyeon99/TimingBeltData/main/"
+#     url = base_url + file_name
+#     try:
+#         response = requests.get(url)
+#         response.raise_for_status()  # 오류가 발생하면 예외 발생
+#         data = response.text
+#         return data
+#     except requests.exceptions.RequestException as e:
+#         st.error(f"Error retrieving data: {str(e)}")
+#         return None
+
+# # 정규화 함수
+# def normalize_data(df):
+#     scaler = MinMaxScaler()
+#     scaled_data = scaler.fit_transform(df)
+#     scaled_df = pd.DataFrame(scaled_data, columns=df.columns, index=df.index)
+#     return scaled_df
+
+# # 표준화 함수
+# def standardize_data(df):
+#     scaler = StandardScaler()
+#     standardized_data = scaler.fit_transform(df)
+#     standardized_df = pd.DataFrame(standardized_data, columns=df.columns, index=df.index)
+#     return standardized_df
+
+# # 신호 처리 기법 선택
+# processing_technique = st.sidebar.selectbox("Signal Processing Technique", ["Raw", "Normalized", "Standardized"])
+
+# # 스트림릿 앱 시작
+# st.header("Real-time Data Visualization")
+
+# # 버튼 클릭 여부 확인
+# button_clicked = st.sidebar.button("Show Graph")
+
+# # 데이터 처리 및 시각화
+# start_time = time.strptime("2023-05-28 00:03", "%Y-%m-%d %H:%M")
+# end_time = time.strptime("2023-05-28 10:46", "%Y-%m-%d %H:%M")
+# current_time = start_time
+
+# fig, ax = plt.subplots(figsize=(12, 4))
+# df_combined = pd.DataFrame()  # 이전 데이터와 새로운 데이터를 합칠 데이터프레임
+
+# while current_time <= end_time:
+#     file_name = time.strftime("A%Y-%m-%d %H:%M.txt", current_time)
+#     data = get_realtime_data(file_name)
+#     if data and button_clicked:
+#         # 데이터 전처리
+#         lines = data.strip().split("\n")
+#         values_1 = []
+#         values_2 = []
+#         values_3 = []
+#         for line in lines:
+#             if line:
+#                 parts = line.split(",")
+#                 if len(parts) >= 3:
+#                     try:
+#                         value_1 = float(parts[0])
+#                         value_2 = float(parts[1])
+#                         value_3 = float(parts[2])
+#                         values_1.append(value_1)
+#                         values_2.append(value_2)
+#                         values_3.append(value_3)
+#                     except ValueError:
+#                         continue
+
+#         # 데이터프레임 생성
+#         df = pd.DataFrame({"Value 1": values_1, "Value 2": values_2, "Value 3": values_3})
+
+#         # 선택한 신호 처리 기법 적용
+#         if processing_technique == "Raw":
+#             processed_df = df
+#         elif processing_technique == "Normalized":
+#             processed_df = normalize_data(df)
+#         elif processing_technique == "Standardized":
+#             processed_df = standardize_data(df)
+
+#         # 기존 데이터프레임과 새로운 데이터프레임 합치기
+#         df_combined = pd.concat([df_combined, processed_df], ignore_index=True)
+
+#         # 그래프 그리기
+#         ax.clear()
+#         for column in processed_df.columns:
+#             ax.plot(df_combined.index, df_combined[column], label=column)
+#         ax.set_xlim(0, len(df_combined))
+#         ax.set_ylim(df_combined.min().min(), df_combined.max().max())
+#         ax.set_xlabel("Time")
+#         ax.set_ylabel("Value")
+#         ax.set_title(f"Real-time Data - {time.strftime('%Y-%m-%d %H:%M', current_time)}")
+#         ax.legend()
+#         st.pyplot(fig)
+
+#     # 다음 시간으로 업데이트
+#     current_time = time.localtime(time.mktime(current_time) + 60)  # 60 seconds = 1 minute
+
+#     # 1초마다 데이터 갱신
+#     time.sleep(1)
+
+# # 그래프 창 닫기
+# plt.close(fig)
+
+
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -504,8 +615,10 @@ start_time = time.strptime("2023-05-28 00:03", "%Y-%m-%d %H:%M")
 end_time = time.strptime("2023-05-28 10:46", "%Y-%m-%d %H:%M")
 current_time = start_time
 
-fig, ax = plt.subplots(figsize=(12, 4))
+#fig, ax = plt.subplots(figsize=(12, 4))
 df_combined = pd.DataFrame()  # 이전 데이터와 새로운 데이터를 합칠 데이터프레임
+
+chart = st.line_chart()  # Create an empty line chart
 
 while current_time <= end_time:
     file_name = time.strftime("A%Y-%m-%d %H:%M.txt", current_time)
@@ -545,16 +658,21 @@ while current_time <= end_time:
         df_combined = pd.concat([df_combined, processed_df], ignore_index=True)
 
         # 그래프 그리기
-        ax.clear()
-        for column in processed_df.columns:
-            ax.plot(df_combined.index, df_combined[column], label=column)
-        ax.set_xlim(0, len(df_combined))
-        ax.set_ylim(df_combined.min().min(), df_combined.max().max())
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Value")
-        ax.set_title(f"Real-time Data - {time.strftime('%Y-%m-%d %H:%M', current_time)}")
-        ax.legend()
-        st.pyplot(fig)
+        # ax.clear()
+        # for column in processed_df.columns:
+        #     ax.plot(df_combined.index, df_combined[column], label=column)
+        # ax.set_xlim(0, len(df_combined))
+        # ax.set_ylim(df_combined.min().min(), df_combined.max().max())
+        # ax.set_xlabel("Time")
+        # ax.set_ylabel("Value")
+        # ax.set_title(f"Real-time Data - {time.strftime('%Y-%m-%d %H:%M', current_time)}")
+        # ax.legend()
+
+        # Update the line chart with new rows
+        chart.add_rows(processed_df)
+
+        # Display the updated line chart
+        # st.pyplot(fig)
 
     # 다음 시간으로 업데이트
     current_time = time.localtime(time.mktime(current_time) + 60)  # 60 seconds = 1 minute
@@ -563,7 +681,24 @@ while current_time <= end_time:
     time.sleep(1)
 
 # 그래프 창 닫기
-plt.close(fig)
+# plt.close(fig)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #############raw데이터, 정규화 스케일링, 표준화스케일링 선택 가능
