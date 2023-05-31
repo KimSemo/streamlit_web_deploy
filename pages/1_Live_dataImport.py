@@ -576,7 +576,7 @@ import time
 
 # 데이터 가져오기
 def get_realtime_data(file_name):
-    base_url = "https://raw.githubusercontent.com/changyeon99/TimingBeltData/main/"
+    base_url = "https://raw.githubusercontent.com/changyeon99/TimingBeltData_CMPS/main/"
     url = base_url + file_name
     try:
         response = requests.get(url)
@@ -611,8 +611,8 @@ st.header("Real-time Data Visualization")
 button_clicked = st.sidebar.button("Show Graph")
 
 # 데이터 처리 및 시각화
-start_time = time.strptime("2023-05-28 00:03", "%Y-%m-%d %H:%M")
-end_time = time.strptime("2023-05-28 10:46", "%Y-%m-%d %H:%M")
+start_time = time.strptime("2023-05-29 19:50", "%Y-%m-%d %H:%M")
+end_time = time.strptime("2023-05-29 23:49", "%Y-%m-%d %H:%M")
 current_time = start_time
 
 #fig, ax = plt.subplots(figsize=(12, 4))
@@ -621,6 +621,7 @@ df_combined = pd.DataFrame()  # 이전 데이터와 새로운 데이터를 합�
 chart = st.line_chart()  # Create an empty line chart
 
 while current_time <= end_time:
+    #file_name = time.strftime("A%Y-%m-%d %H:%M:%S.txt", current_time)
     file_name = time.strftime("A%Y-%m-%d %H:%M.txt", current_time)
     data = get_realtime_data(file_name)
     if data and button_clicked:
