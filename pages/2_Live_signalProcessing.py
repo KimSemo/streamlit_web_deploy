@@ -852,7 +852,7 @@ from sklearn.preprocessing import StandardScaler
 
 # 데이터 가져오기
 def get_realtime_data(file_name):
-    base_url = "https://raw.githubusercontent.com/changyeon99/TimingBeltData_CMPS/main/"
+    base_url = "https://raw.githubusercontent.com/changyeon99/TimingBeltData/main/"
     url = base_url + file_name
     try:
         response = requests.get(url)
@@ -1065,6 +1065,145 @@ while current_time <= end_time:
 # 그래프 창 닫기
 #plt.close(fig)
 
+
+######################수정된 코드(정규 꺼 가져오도록)
+# import streamlit as st
+# import numpy as np
+# import pandas as pd
+# import requests
+# import matplotlib.pyplot as plt
+# import time
+# from sklearn.preprocessing import StandardScaler
+# import io
+
+# # 데이터 가져오기
+# def get_realtime_data(file_name):
+#     base_url = "https://raw.githubusercontent.com/PAK917/TimingBelt/main/CMPS_20230531/"
+#     url = base_url + file_name
+#     try:
+#         response = requests.get(url)
+#         response.raise_for_status()  # 오류가 발생하면 예외 발생
+#         data = response.text
+#         return data
+#     except requests.exceptions.RequestException as e:
+#         st.error(f"Error retrieving data: {str(e)}")
+#         return None
+
+# # 신호 처리 함수 - RMS
+# def process_rms_data(df):
+#     processed_df = pd.DataFrame(index=df.index)  # 인덱스 설정
+#     window_size = 5  # 이동 평균에 사용할 윈도우 크기 설정
+#     zscore_threshold = 3  # Z-score 이상치 탐지 임계값 설정
+
+#     for column in df.columns:
+#         processed_column = df[column].dropna()  # NaN 값 제거
+#         rms_values = np.sqrt(np.mean(processed_column ** 2))  # RMS 계산
+#         processed_column /= rms_values  # RMS 값으로 나누어 정규화
+#         processed_column = processed_column.rolling(window_size, min_periods=1).mean()  # 이동 평균 적용
+#         scaler = StandardScaler()
+#         processed_column = scaler.fit_transform(processed_column.values.reshape(-1, 1))[:, 0]  # 스케일링
+
+#         # 이상치 탐지 및 처리
+#         z_scores = np.abs((processed_column - processed_column.mean()) / processed_column.std())
+#         processed_column[z_scores > zscore_threshold] = np.nan
+
+#         processed_df[column] = processed_column
+
+#     return processed_df
+
+# # 신호 처리 함수 - FFT with FFT shift
+# def process_fft_data(df):
+#     processed_df = pd.DataFrame(index=df.index[:-1])  # 인덱스 설정 (마지막 데이터 제외)
+#     window_size = 5  # 이동 평균에 사용할 윈도우 크기 설정
+#     zscore_threshold = 3  # Z-score 이상치 탐지 임계값 설정
+
+#     for column in df.columns:
+#         fft_values = np.fft.fft(df[column][1:])  # 첫 번째 데이터 제외하고 FFT 적용
+
+#         # FFT shift 적용
+#         fft_values_shifted = np.fft.fftshift(fft_values)
+
+#         # FFT 결과 정규화
+#         fft_values_normalized = np.abs(fft_values_shifted) / len(fft_values_shifted)
+
+#         # 이동 평균 적용
+#         processed_values = pd.Series(fft_values_normalized).rolling(window_size, min_periods=1).mean()
+
+#         # 이동 평균 값이 0보다 작으면 0으로 처리
+#         processed_values[processed_values < 0] = 0
+
+#         # 이동 평균 값을 정규화
+#         scaler = StandardScaler()
+#         processed_values = scaler.fit_transform(processed_values.values.reshape(-1, 1))[:, 0]
+
+#         # 이상치 탐지 및 처리
+#         z_scores = np.abs((processed_values - processed_values.mean()) / processed_values.std())
+#         processed_values[z_scores > zscore_threshold] = np.nan
+
+#         processed_df[column] = processed_values
+
+#     return processed_df
+
+# # Main 함수
+# def main():
+#     # 타이밍 벨트 데이터 시각화 앱
+#     st.title("Timing Belt Data Visualization")
+#     st.write("Welcome to the Timing Belt Data Visualization app!")
+
+#     # 데이터 가져오기
+#     file_name = "20230531_090000.csv"  # 가져올 데이터 파일 이름 설정
+#     data = get_realtime_data(file_name)
+#     if data:
+#         df = pd.read_csv(io.StringIO(data), skiprows=1, usecols=[1, 2, 3, 4], names=["Number", "Time", "External Sound", "Ambient Temp.", "Target Temp"])
+#         df["Time"] = pd.to_datetime(df["Time"])
+#         df = df.set_index("Time")
+
+#         # 데이터 확인
+#         st.subheader("Raw Data")
+#         st.write(df)
+
+#         # 데이터 전처리 옵션 선택
+#         preprocess_option = st.selectbox("Select preprocessing option:", ("None", "RMS", "FFT"))
+
+#         # 데이터 전처리
+#         if preprocess_option == "RMS":
+#             processed_df = process_rms_data(df)
+#         elif preprocess_option == "FFT":
+#             processed_df = process_fft_data(df)
+#         else:
+#             processed_df = df
+
+#         # 전처리된 데이터 확인
+#         st.subheader("Processed Data")
+#         st.write(processed_df)
+
+#         # 데이터 시각화
+#         st.subheader("Data Visualization")
+#         fig, ax = plt.subplots(figsize=(10, 6))
+#         ax.plot(df.index, df["External Sound"], label="External Sound")
+#         ax.plot(df.index, df["Ambient Temp."], label="Ambient Temp.")
+#         ax.plot(df.index, df["Target Temp"], label="Target Temp")
+#         ax.set_xlabel("Time")
+#         ax.set_ylabel("Value")
+#         ax.set_title("Raw Data")
+#         ax.legend()
+#         st.pyplot(fig)
+
+#         fig, ax = plt.subplots(figsize=(10, 6))
+#         ax.plot(processed_df.index, processed_df["External Sound"], label="External Sound")
+#         ax.plot(processed_df.index, processed_df["Ambient Temp."], label="Ambient Temp.")
+#         ax.plot(processed_df.index, processed_df["Target Temp"], label="Target Temp")
+#         ax.set_xlabel("Time")
+#         ax.set_ylabel("Value")
+#         ax.set_title("Processed Data")
+#         ax.legend()
+#         st.pyplot(fig)
+
+#     else:
+#         st.warning("No data available at the moment. Please try again later.")
+
+# if __name__ == "__main__":
+#     main()
 
 
 
